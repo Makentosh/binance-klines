@@ -1,0 +1,45 @@
+version: '3'
+services:
+  # MySQL database
+  mysql:
+    container_name: $MYSQL_CONTAINER_NAME
+    image: mysql:5.7
+    env_file: ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQLDB_ROOT_PASSWORD
+      MYSQL_DATABASE: $MYSQLDB_DATABASE
+      # MYSQL_ROOT_HOST: 
+      # MYSQL_DATABASE_HOST: 127.0.0.1
+      MYSQL_USER: $MYSQLDB_USER
+      MYSQL_PASSWORD: $MYSQLDB_MYSQL_PASSWORD
+    ports:
+      - $MYSQLDB_LOCAL_PORT:$MYSQLDB_DOCKER_PORT
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: $MYSQLDB_DOCKER_PORT
+    ports:
+      - 8080:80
+    depends_on:
+      - mysql
+
+  node_app:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    tty: true
+    stdin_open: true
+    ports:
+      - 3308:3000
+    command: sh -c 'npm i && npm run prod'
+    depends_on:
+      - mysql
+  #mysql -h localhost -P 3307 -u makentosh -p
+  # volumes:
+  #   mysql-data:
