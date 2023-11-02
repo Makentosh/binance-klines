@@ -1,6 +1,5 @@
 version: '3'
 services:
-  # MySQL database
   mysql:
     container_name: $MYSQL_CONTAINER_NAME
     image: mysql:5.7

@@ -5,25 +5,25 @@ import advancedFormat from 'dayjs/plugin/advancedFormat';
 
 dayjs.extend(advancedFormat);
 
-import { getKlinesFromTable, createTable, writeklineToTable, checkIfTableExist } from './sqlHelpers';
+import { getKlinesFromTable, createTable, writeKlineToTable, checkIfTableExist } from './sqlHelpers';
 
+const timeFormat = 'YYYY-MM-DD HH:mm:ss';
 
 const baseUrl = 'https://api.binance.com/api/v3/klines';
 const interval = '1m';
+const batchSize = 1000;
+
 
 const now = Date.now();
-const YEARS_COUNT = 3;
-// const start_time = now - YEARS_COUNT * 365 * 24 * 60 * 60 * 1000; //3 year
-const start_time = now - YEARS_COUNT * 365 * 24 * 60 * 60 * 1000;
+const yearsCount = 3;
+const startTime = now - yearsCount * 365 * 24 * 60 * 60 * 1000;
 
-let next_start = Number(dayjs(start_time).startOf('day').format('x'));
-
-const batch_size = 1000;
-
+let nextStart = Number(dayjs(startTime).startOf('day').format('x'));
 let requestCount = 0;
 
-async function retrieveKlines(symbol) {
-    console.log(`START retrieveKlines-${symbol}`)
+
+const retrieveKlines = async (symbol) => {
+    console.log(`START getKlines-${symbol}`)
 
     // let klinesFileName = `klines_data_${symbol}.json`;
 
@@ -41,9 +41,9 @@ async function retrieveKlines(symbol) {
         if (currKlines.length > 0) {
             let lastKlines = currKlines[currKlines.length - 1];
 
-            console.log(dayjs(lastKlines[6] + 1).format('YYYY-MM-DD, HH:mm:ss'), 'start with this last klines')
+            console.log(dayjs(lastKlines[6] + 1).format(timeFormat), 'start with this last klines')
 
-            next_start = lastKlines[6] + 1 //set start_time to time last klines
+            nextStart = lastKlines[6] + 1 //set startTime to time last klines
 
         } else {
             console.log(`Table ${symbol} is empty ?`)
@@ -54,10 +54,10 @@ async function retrieveKlines(symbol) {
     }
 
 
-    let end_time = Date.now();
+    let endTime = Date.now();
 
-    while (end_time > next_start) {
-        end_time = Date.now();
+    while (endTime > nextStart) {
+        endTime = Date.now();
 
         requestCount++
         // Define the parameters for the request
@@ -65,18 +65,18 @@ async function retrieveKlines(symbol) {
         const params = {
             symbol,
             interval,
-            startTime: next_start,
-            endTime: end_time,
-            limit: batch_size,
+            startTime: nextStart,
+            endTime: endTime,
+            limit: batchSize,
         };
 
         // console.table({
         //     initialParams: 'initialParams',
-        //     startTime: dayjs(next_start).format('YYYY-MM-DD HH:mm:ss'),
+        //     startTime: dayjs(nextStart).format(timeFormat),
         //     symbol,
         //     interval,
-        //     endTime: dayjs(end_time).format('YYYY-MM-DD HH:mm:ss'),
-        //     limit: batch_size,
+        //     endTime: dayjs(endTime).format(timeFormat),
+        //     limit: batchSize,
         // })
 
 
@@ -89,17 +89,17 @@ async function retrieveKlines(symbol) {
 
             let lastTimeKline = response?.data[response?.data?.length - 1][6] + 1;
 
-            await writeklineToTable(symbol, response.data)
+            await writeKlineToTable(symbol, response.data)
 
             console.table({
                 symbol,
-                startTime: dayjs(next_start).format('YYYY-MM-DD HH:mm:ss'),
-                nextTimeWillBe: dayjs(lastTimeKline).format('YYYY-MM-DD HH:mm:ss'),
-                endTime: dayjs(end_time).format('YYYY-MM-DD HH:mm:ss'),
+                startTime: dayjs(nextStart).format(timeFormat),
+                nextTimeWillBe: dayjs(lastTimeKline).format(timeFormat),
+                endTime: dayjs(endTime).format(timeFormat),
             })
 
 
-            next_start = lastTimeKline; //lst kline open time from request
+            nextStart = lastTimeKline; //lst kline open time from request
 
 
         } catch (error) {
@@ -112,13 +112,13 @@ async function retrieveKlines(symbol) {
     console.log(requestCount, 'Count requests')
 
     requestCount = 0;
-    next_start = Number(dayjs(start_time).startOf('day').format('x'));
+    nextStart = Number(dayjs(startTime).startOf('day').format('x'));
 
     console.log('Data retrieval complete');
 }
 
 
-export async function fetchTradingPairs() {
+export const fetchTradingPairs = async () => {
     const baseUrl = 'https://api.binance.com/api/v3/exchangeInfo';
 
     let tradingPairs = [];

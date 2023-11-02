@@ -1,9 +1,5 @@
-import dotEnv from "dotenv";
-dotEnv.config();
-
 import mysql from 'mysql';
 
-// Create a MySQL connection
 const db = mysql.createConnection({
     // host: 'localhost', // Use the service name defined in Docker Compose (if applicable)
     port: parseInt(process.env.MYSQLDB_DOCKER_PORT),
