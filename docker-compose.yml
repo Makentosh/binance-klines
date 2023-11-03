@@ -36,7 +36,7 @@ services:
     stdin_open: true
     ports:
       - 3308:3000
-    command: sh -c 'npm i && npm run prod'
+    command: sh -c 'npm ci && npm run prod'
     depends_on:
       - mysql
   #mysql -h localhost -P 3307 -u makentosh -p
